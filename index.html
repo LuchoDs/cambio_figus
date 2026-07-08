@@ -96,6 +96,43 @@
             padding-left: 15px;
             font-size: 15px;
         }
+        /* --- RESPONSIVE PARA CELULARES --- */
+@media (max-width: 768px) {
+    body {
+        margin: 10px;
+    }
+    
+    .contenedor-principal {
+        flex-direction: column; /* Pasa todo a vertical */
+        gap: 15px;
+    }
+
+    .columna {
+        width: 100%; /* Ocupa todo el ancho de la pantalla */
+    }
+
+    textarea {
+        height: 250px; /* Un poco más petiso en celus para que no scrollear infinito */
+    }
+
+    .contenedor-boton {
+        height: auto; /* Le sacamos el alto de 400px del escritorio */
+        padding: 10px 0;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-ejecutar {
+        width: 100%; /* El botón ocupa todo el ancho disponible para que sea fácil de tocar */
+        max-width: none;
+        padding: 12px;
+    }
+    
+    .resultados {
+        margin-top: 20px;
+        padding: 15px;
+    }
+}
     </style>
 </head>
 <body>
