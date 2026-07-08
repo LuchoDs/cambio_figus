@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intercambio de Figuritas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .contenedor-principal {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .columna {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        /* Colores del boceto para identificar visualmente cada lado */
+        .columna-1 input { border: 2px solid #ff0000; }
+        .columna-1 textarea { border: 2px solid #ff0000; }
+        
+        .columna-2 input { border: 2px solid #0099ff; }
+        .columna-2 textarea { border: 2px solid #0099ff; }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 4px;
+            outline: none;
+        }
+        textarea {
+            height: 350px;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 4px;
+            resize: vertical;
+            outline: none;
+            font-family: monospace;
+        }
+        .contenedor-boton {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 400px; /* Centrado vertical aproximado respecto a las cajas */
+        }
+        .btn-ejecutar {
+            background-color: #fff;
+            border: 3px solid #0099ff;
+            color: #0099ff;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            max-width: 150px;
+            text-align: center;
+        }
+        .btn-ejecutar:hover {
+            background-color: #0099ff;
+            color: #fff;
+        }
+        .resultados {
+            max-width: 1200px;
+            margin: 30px auto 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none; /* Se muestra solo al procesar */
+        }
+        .bloque-resultado {
+            margin-bottom: 20px;
+        }
+        .bloque-resultado h3 {
+            border-bottom: 20px;
+            padding-bottom: 5px;
+            color: #2c3e50;
+        }
+        .item-match {
+            margin: 5px 0;
+            padding-left: 15px;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🔄 Comparador de Figuritas</h1>
+
+    <div class="contenedor-principal">
+        <div class="columna columna-1">
+            <input type="text" id="nombre1" placeholder="Nombre Persona 1" value="">
+            <textarea id="lista1" placeholder="Pegá acá el listado completo de WhatsApp (con Me faltan y Repetidas)..."></textarea>
+        </div>
+
+        <div class="contenedor-boton">
+            <button class="btn-ejecutar" id="btnProcesar">boton ejecutar cruce</button>
+        </div>
+
+        <div class="columna columna-2">
+            <input type="text" id="nombre2" placeholder="Nombre Persona 2" value="">
+            <textarea id="lista2" placeholder="Pegá acá el listado completo de WhatsApp (con Me faltan y Repetidas)..."></textarea>
+        </div>
+    </div>
+
+    <div class="resultados" id="seccionResultados">
+        <h2>📊 Resultados del Cruce</h2>
+        <div id="contenidoResultados"></div>
+    </div>
+
+    <script>
+        // Función para parsear los bloques de texto a objetos JS
+        function parsearBloqueCompleto(texto) {
+            const faltanDict = {};
+            const repetidasDict = {};
+            let seccionActual = null;
+
+            // Separamos por líneas
+            const lineas = texto.split('\n');
+
+            lineas.forEach(linea => {
+                const lineaLimpia = linea.trim();
+
+                if (lineaLimpia.toLowerCase().includes("me faltan")) {
+                    seccionActual = "faltan";
+                    return;
+                } else if (lineaLimpia.toLowerCase().includes("repetidas")) {
+                    seccionActual = "repetidas";
+                    return;
+                }
+
+                if (lineaLimpia.includes(":") && seccionActual) {
+                    const [partePais, parteNumeros] = lineaLimpia.split(":");
+                    const pais = partePais.trim();
+                    
+                    // Extraer los números usando regex
+                    const numeros = (parteNumeros.match(/\d+/g) || []).map(Number);
+
+                    if (seccionActual === "faltan") {
+                        faltanDict[pais] = numeros;
+                    } else if (seccionActual === "repetidas") {
+                        repetidasDict[pais] = numeros;
+                    }
+                }
+            });
+
+            return { faltan: faltanDict, repetidas: repetidasDict };
+        }
+
+        // Función para cruzar los datos de las dos listas
+        function cruzarListas(faltanPersonaA, repetidasPersonaB) {
+            const intercambio = {};
+            
+            Object.keys(faltanPersonaA).forEach(pais => {
+                if (repetidasPersonaB[pais]) {
+                    // Intersección de arrays usando Set para máxima velocidad
+                    const setRepetidas = new Set(repetidasPersonaB[pais]);
+                    const coincidencias = faltanPersonaA[pais].filter(num => setRepetidas.has(num));
+
+                    if (coincidencias.length > 0) {
+                        intercambio[pais] = coincidencias.sort((a, b) => a - b);
+                    }
+                }
+            });
+
+            return intercambio;
+        }
+
+        // Evento principal al hacer click en el botón
+        document.getElementById('btnProcesar').addEventListener('click', () => {
+            const nombre1 = document.getElementById('nombre1').value.trim().toUpperCase() || "PERSONA 1";
+            const nombre2 = document.getElementById('nombre2').value.trim().toUpperCase() || "PERSONA 2";
+            
+            const texto1 = document.getElementById('lista1').value;
+            const texto2 = document.getElementById('lista2').value;
+
+            // Validación básica
+            if (!texto1.trim() || !texto2.trim()) {
+                alert("Por favor, asegurate de cargar los datos en ambos listados antes de ejecutar.");
+                return;
+            }
+
+            // Procesar textos
+            const datos1 = parsearBloqueCompleto(texto1);
+            const datos2 = parsearBloqueCompleto(texto2);
+
+            // Hacer los cruces cruzados
+            const cambioPara1 = cruzarListas(datos1.faltan, datos2.repetidas); // Lo que 2 le da a 1
+            const cambioPara2 = cruzarListas(datos2.faltan, datos1.repetidas); // Lo que 1 le da a 2
+
+            // Construir el HTML de los resultados
+            let htmlResultados = "";
+
+            // Bloque 1: Lo que Persona 2 le da a Persona 1
+            htmlResultados += `<div class="bloque-resultado">
+                <h3>🎁 LO QUE ${nombre2} LE PUEDE DAR A ${nombre1}:</h3>`;
+            if (Object.keys(cambioPara1).length > 0) {
+                Object.entries(cambioPara1).forEach(([pais, numeros]) => {
+                    htmlResultados += `<div class="item-match">✅ <strong>${pais}</strong>: [${numeros.join(', ')}]</div>`;
+                });
+            } else {
+                htmlResultados += `<div class="item-match">❌ No hay coincidencias disponibles.</div>`;
+            }
+            htmlResultados += `</div><br>`;
+
+            // Bloque 2: Lo que Persona 1 le da a Persona 2
+            htmlResultados += `<div class="bloque-resultado">
+                <h3>🎁 LO QUE ${nombre1} LE PUEDE DAR A ${nombre2}:</h3>`;
+            if (Object.keys(cambioPara2).length > 0) {
+                Object.entries(cambioPara2).forEach(([pais, numeros]) => {
+                    htmlResultados += `<div class="item-match">✅ <strong>${pais}</strong>: [${numeros.join(', ')}]</div>`;
+                });
+            } else {
+                htmlResultados += `<div class="item-match">❌ No hay coincidencias disponibles.</div>`;
+            }
+            htmlResultados += `</div>`;
+
+            // Mostrar la sección en el DOM
+            document.getElementById('contenidoResultados').innerHTML = htmlResultados;
+            document.getElementById('seccionResultados').style.display = 'block';
+            
+            // Auto-scroll suave hacia los resultados
+            document.getElementById('seccionResultados').scrollIntoView({ behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
