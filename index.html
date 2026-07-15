@@ -91,48 +91,55 @@
             padding-bottom: 5px;
             color: #2c3e50;
         }
+        .total-contador {
+            font-size: 15px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 5px 0 10px 0;
+            padding-left: 15px;
+        }
         .item-match {
             margin: 5px 0;
             padding-left: 15px;
             font-size: 15px;
         }
         /* --- RESPONSIVE PARA CELULARES --- */
-@media (max-width: 768px) {
-    body {
-        margin: 10px;
-    }
-    
-    .contenedor-principal {
-        flex-direction: column; /* Pasa todo a vertical */
-        gap: 15px;
-    }
+        @media (max-width: 768px) {
+            body {
+                margin: 10px;
+            }
+            
+            .contenedor-principal {
+                flex-direction: column; /* Pasa todo a vertical */
+                gap: 15px;
+            }
 
-    .columna {
-        width: 100%; /* Ocupa todo el ancho de la pantalla */
-    }
+            .columna {
+                width: 100%; /* Ocupa todo el ancho de la pantalla */
+            }
 
-    textarea {
-        height: 250px; /* Un poco más petiso en celus para que no scrollear infinito */
-    }
+            textarea {
+                height: 250px; /* Un poco más petiso en celus para que no scrollear infinito */
+            }
 
-    .contenedor-boton {
-        height: auto; /* Le sacamos el alto de 400px del escritorio */
-        padding: 10px 0;
-        width: 100%;
-        justify-content: center;
-    }
+            .contenedor-boton {
+                height: auto; /* Le sacamos el alto de 400px del escritorio */
+                padding: 10px 0;
+                width: 100%;
+                justify-content: center;
+            }
 
-    .btn-ejecutar {
-        width: 100%; /* El botón ocupa todo el ancho disponible para que sea fácil de tocar */
-        max-width: none;
-        padding: 12px;
-    }
-    
-    .resultados {
-        margin-top: 20px;
-        padding: 15px;
-    }
-}
+            .btn-ejecutar {
+                width: 100%; /* El botón ocupa todo el ancho disponible para que sea fácil de tocar */
+                max-width: none;
+                padding: 12px;
+            }
+            
+            .resultados {
+                margin-top: 20px;
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -240,13 +247,23 @@
             const cambioPara1 = cruzarListas(datos1.faltan, datos2.repetidas); // Lo que 2 le da a 1
             const cambioPara2 = cruzarListas(datos2.faltan, datos1.repetidas); // Lo que 1 le da a 2
 
+            // Calcular totales de figuritas
+            let totalPara1 = 0;
+            Object.values(cambioPara1).forEach(numeros => totalPara1 += numeros.length);
+
+            let totalPara2 = 0;
+            Object.values(cambioPara2).forEach(numeros => totalPara2 += numeros.length);
+
             // Construir el HTML de los resultados
             let htmlResultados = "";
 
             // Bloque 1: Lo que Persona 2 le da a Persona 1
             htmlResultados += `<div class="bloque-resultado">
                 <h3>🎁 LO QUE ${nombre2} LE PUEDE DAR A ${nombre1}:</h3>`;
-            if (Object.keys(cambioPara1).length > 0) {
+            
+            // Si el total es mayor a 0, mostramos la línea del total
+            if (totalPara1 > 0) {
+                htmlResultados += `<div class="total-contador">TOTAL = ${totalPara1}</div>`;
                 Object.entries(cambioPara1).forEach(([pais, numeros]) => {
                     htmlResultados += `<div class="item-match">✅ <strong>${pais}</strong>: [${numeros.join(', ')}]</div>`;
                 });
@@ -258,7 +275,10 @@
             // Bloque 2: Lo que Persona 1 le da a Persona 2
             htmlResultados += `<div class="bloque-resultado">
                 <h3>🎁 LO QUE ${nombre1} LE PUEDE DAR A ${nombre2}:</h3>`;
-            if (Object.keys(cambioPara2).length > 0) {
+            
+            // Si el total es mayor a 0, mostramos la línea del total
+            if (totalPara2 > 0) {
+                htmlResultados += `<div class="total-contador">TOTAL = ${totalPara2}</div>`;
                 Object.entries(cambioPara2).forEach(([pais, numeros]) => {
                     htmlResultados += `<div class="item-match">✅ <strong>${pais}</strong>: [${numeros.join(', ')}]</div>`;
                 });
@@ -274,7 +294,6 @@
             // Auto-scroll suave hacia los resultados
             document.getElementById('seccionResultados').scrollIntoView({ behavior: 'smooth' });
         });
-        
     </script>
 </body>
 </html>
